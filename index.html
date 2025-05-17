@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vietnamese Driver's License Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .quiz-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .question {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .options {
+            display: grid;
+            grid-gap: 10px;
+            margin-bottom: 20px;
+        }
+        .option {
+            padding: 12px 15px;
+            background-color: #f1f3f5;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 2px solid transparent;
+        }
+        .option:hover {
+            background-color: #e9ecef;
+        }
+        .option.selected {
+            border-color: #0056b3;
+            background-color: #e7f1ff;
+        }
+        .option.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+        .option.incorrect {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+        .feedback {
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            margin-bottom: 15px;
+        }
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            flex-grow: 1;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #0056b3;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .stats {
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        .language-switch {
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .language-switch button {
+            background-color: #6c757d;
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .language-switch button.active {
+            background-color: #0056b3;
+        }
+        .hide {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="language-switch">
+        <button id="btn-vietnamese" class="active">Tiếng Việt</button>
+        <button id="btn-english">English</button>
+    </div>
+    
+    <h1 id="title-vi">Trắc Nghiệm Bằng Lái Xe</h1>
+    <h1 id="title-en" class="hide">Driver's License Quiz</h1>
+    
+    <div class="quiz-container">
+        <div class="progress">
+            <span id="progress-text-vi">Câu hỏi 1/20</span>
+            <span id="progress-text-en" class="hide">Question 1/20</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <span id="stats-text-vi">Đúng: 0 | Sai: 0</span>
+            <span id="stats-text-en" class="hide">Correct: 0 | Wrong: 0</span>
+        </div>
+        
+        <div id="question" class="question"></div>
+        
+        <div id="options" class="options"></div>
+        
+        <div id="feedback-correct-vi" class="feedback">Chính xác! Bạn đã chọn đúng.</div>
+        <div id="feedback-incorrect-vi" class="feedback">Chưa đúng! Đáp án đúng đã được đánh dấu.</div>
+        
+        <div id="feedback-correct-en" class="feedback hide">Correct! You chose the right answer.</div>
+        <div id="feedback-incorrect-en" class="feedback hide">Incorrect! The correct answer has been marked.</div>
+        
+        <div class="controls">
+            <button id="prev-btn-vi">Câu trước</button>
+            <button id="next-btn-vi">Câu tiếp</button>
+            
+            <button id="prev-btn-en" class="hide">Previous</button>
+            <button id="next-btn-en" class="hide">Next</button>
+        </div>
+    </div>
+
+    <script>
+        // Quiz data
+        const quizData = [
+            {
+                question: "Câu 001: Bạn phải thông báo cho DMV khi nào nếu bạn thay đổi địa chỉ?",
+                options: [
+                    "A. Trong vòng 5 ngày",
+                    "B. Trong vòng 10 ngày",
+                    "C. Trong vòng 15 ngày",
+                    "D. Trong vòng 30 ngày"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 001: When must you notify the DMV if you change your address?",
+                optionsEn: [
+                    "A. Within 5 days",
+                    "B. Within 10 days",
+                    "C. Within 15 days",
+                    "D. Within 30 days"
+                ]
+            },
+            {
+                question: "Câu 002: Trách nhiệm của bạn liên quan đến việc dùng thuốc là gì?",
+                options: [
+                    "A. Thuốc kê đơn và thuốc không kê đơn có thể khiến bạn lái xe không an toàn",
+                    "B. Một số loại thuốc có thể khiến bạn buồn ngủ",
+                    "C. Bạn có trách nhiệm biết tác dụng của các loại thuốc bạn sử dụng",
+                    "D. Tất cả các ý trên"
+                ],
+                correctAnswer: 3, // D
+                questionEn: "Question 002: What is your responsibility regarding medication use?",
+                optionsEn: [
+                    "A. Prescription and over-the-counter medications can make you drive unsafely",
+                    "B. Some medications can make you drowsy",
+                    "C. You are responsible for knowing the effects of the medications you use",
+                    "D. All of the above"
+                ]
+            },
+            {
+                question: "Câu 003: Để điều khiển xe của bạn, điều quan trọng là",
+                options: [
+                    "A. Giữ một tay trên vô lăng mọi lúc",
+                    "B. Giữ cả hai tay trên vô lăng khi có thể",
+                    "C. Giữ chặt một cách thư giãn chỉ bằng đầu ngón tay",
+                    "D. Luân phiên đổi tay trên vô lăng khi lái xe đường dài"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 003: To control your vehicle, it is important to",
+                optionsEn: [
+                    "A. Keep one hand on the steering wheel at all times",
+                    "B. Keep both hands on the steering wheel whenever possible",
+                    "C. Hold firmly but relaxed with just your fingertips",
+                    "D. Alternate hands on the steering wheel during long drives"
+                ]
+            },
+            {
+                question: "Câu 004: Để điều khiển xe của bạn, điều quan trọng là",
+                options: [
+                    "A. Giữ một tay trên vô lăng mọi lúc",
+                    "B. Giữ cả hai tay trên vô lăng khi có thể",
+                    "C. Giữ chặt một cách thư giãn chỉ bằng đầu ngón tay",
+                    "D. Luân phiên đổi tay trên vô lăng khi lái xe đường dài"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 004: To control your vehicle, it is important to",
+                optionsEn: [
+                    "A. Keep one hand on the steering wheel at all times",
+                    "B. Keep both hands on the steering wheel whenever possible",
+                    "C. Hold firmly but relaxed with just your fingertips",
+                    "D. Alternate hands on the steering wheel during long drives"
+                ]
+            },
+            {
+                question: "Câu 005: Khi quay xe ở tốc độ thấp, đỗ xe hoặc khôi phục sau khi xe trượt, bạn nên sử dụng phương pháp điều khiển vô lăng nào?",
+                options: [
+                    "A. Phương pháp đánh lái tay chồng tay",
+                    "B. Phương pháp đánh lái đẩy-kéo (điều khiển)",
+                    "C. Phương pháp giữ một tay trên đỉnh vô lăng",
+                    "D. Phương pháp đánh lái chéo (bắt chéo tay)"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 005: When turning at low speeds, parking, or recovering from a skid, which steering method should you use?",
+                optionsEn: [
+                    "A. Hand-over-hand steering method",
+                    "B. Push-pull steering method (control)",
+                    "C. One hand on top of the steering wheel method",
+                    "D. Hand-across-hand steering method"
+                ]
+            },
+            {
+                question: "Câu 006: Trong những tình huống nào dưới đây, nên sử dụng phương pháp một tay trên vô lăng?",
+                options: [
+                    "A. Khi quay xe khi lùi và khi thao tác các điều khiển trên xe yêu cầu bạn rời tay khỏi vô lăng",
+                    "B. Khi thực hiện các cú quay xe tốc độ cao trên đường cao tốc mở",
+                    "C. Khi khôi phục sau khi xe trượt ở tốc độ thấp",
+                    "D. Khi lái thẳng ở tốc độ bình thường"
+                ],
+                correctAnswer: 0, // A
+                questionEn: "Question 006: In which of the following situations should you use the one-hand steering method?",
+                optionsEn: [
+                    "A. When turning while backing up and when operating vehicle controls that require you to take your hand off the wheel",
+                    "B. When making high-speed turns on open highways",
+                    "C. When recovering from a skid at low speeds",
+                    "D. When driving straight at normal speeds"
+                ]
+            },
+            {
+                question: "Câu 007: Khi nào bạn phải luôn bật xi-nhan?",
+                options: [
+                    "A. Khi bạn rẽ, chuyển làn, giảm tốc độ hoặc dừng lại",
+                    "B. Khi bạn khởi động động cơ hoặc mở cửa xe",
+                    "C. Khi bạn vào đường cao tốc hoặc trạm thu phí",
+                    "D. Khi bạn lùi xe hoặc lùi vào chỗ đỗ"
+                ],
+                correctAnswer: 0, // A
+                questionEn: "Question 007: When must you always use your turn signal?",
+                optionsEn: [
+                    "A. When you turn, change lanes, slow down, or stop",
+                    "B. When you start the engine or open the car door",
+                    "C. When you enter highways or toll plazas",
+                    "D. When you back up or back into parking spaces"
+                ]
+            },
+            {
+                question: "Câu 008: Tín hiệu bằng tay của người lái xe trong hình biểu thị điều gì?",
+                options: [
+                    "A. Rẽ trái",
+                    "B. Rẽ phải",
+                    "C. Giảm tốc hoặc dừng lại",
+                    "D. Cảnh báo nguy hiểm"
+                ],
+                correctAnswer: 0, // A
+                questionEn: "Question 008: What does the hand signal shown in the image indicate?",
+                optionsEn: [
+                    "A. Left turn",
+                    "B. Right turn",
+                    "C. Slowing down or stopping",
+                    "D. Warning of danger"
+                ]
+            },
+            {
+                question: "Câu 009: Tín hiệu tay của người lái xe trong hình biểu thị điều gì?",
+                options: [
+                    "A. Rẽ trái",
+                    "B. Rẽ phải",
+                    "C. Giảm tốc hoặc dừng lại",
+                    "D. Cảnh báo nguy hiểm"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 009: What does the driver's hand signal in the image indicate?",
+                optionsEn: [
+                    "A. Left turn",
+                    "B. Right turn",
+                    "C. Slowing down or stopping",
+                    "D. Warning of danger"
+                ]
+            },
+            {
+                question: "Câu 010: Tín hiệu tay của người lái xe trong hình biểu thị điều gì?",
+                options: [
+                    "A. Rẽ trái",
+                    "B. Rẽ phải",
+                    "C. Giảm tốc hoặc dừng lại",
+                    "D. Cảnh báo nguy hiểm"
+                ],
+                correctAnswer: 2, // C
+                questionEn: "Question 010: What does the driver's hand signal in the image indicate?",
+                optionsEn: [
+                    "A. Left turn",
+                    "B. Right turn",
+                    "C. Slowing down or stopping",
+                    "D. Warning of danger"
+                ]
+            },
+            {
+                question: "Câu 011: Bạn nên bật đèn xi-nhan:",
+                options: [
+                    "A. Ít nhất 100 feet trước khi rẽ; trước mỗi lần chuyển làn; và trước khi tiến sát hoặc rời khỏi lề đường",
+                    "B. Ít nhất 5 giây trước khi chuyển làn trên đường cao tốc; ngay cả khi bạn không thấy phương tiện khác xung quanh; và khi bạn sắp đi qua giao lộ nếu dự định rẽ ngay sau đó",
+                    "C. Ít nhất 100 feet trước khi rẽ; trước mỗi lần chuyển làn; ít nhất 5 giây trước khi chuyển làn trên đường cao tốc; trước khi tiến sát hoặc rời khỏi lề đường; ngay cả khi bạn không thấy phương tiện khác xung quanh; và khi bạn sắp đi qua giao lộ nếu dự định rẽ ngay sau đó",
+                    "D. Chỉ khi bạn thấy có xe khác xung quanh"
+                ],
+                correctAnswer: 2, // C
+                questionEn: "Question 011: You should use your turn signal:",
+                optionsEn: [
+                    "A. At least 100 feet before turning; before each lane change; and before pulling up to or away from the curb",
+                    "B. At least 5 seconds before changing lanes on highways; even when you don't see other vehicles around; and when you're about to go through an intersection if you plan to turn immediately after",
+                    "C. At least 100 feet before turning; before each lane change; at least 5 seconds before changing lanes on highways; before pulling up to or away from the curb; even when you don't see other vehicles around; and when you're about to go through an intersection if you plan to turn immediately after",
+                    "D. Only when you see other vehicles around"
+                ]
+            },
+            {
+                question: "Câu 012: Khi nào bạn nên sử dụng còi xe?",
+                options: [
+                    "A. Để tránh va chạm và cảnh báo giao thông chiều ngược lại trên đường núi hẹp khi bạn không thể nhìn thấy ít nhất 200 feet phía trước",
+                    "B. Để chào bạn bè khi bạn đi ngang qua và bày tỏ sự sốt ruột trong tình trạng kẹt xe",
+                    "C. Để ăn mừng khi bạn vượt qua kỳ thi lái xe và để cảnh báo người đi bộ tại lối băng qua đường",
+                    "D. Để điều chỉnh gương chiếu hậu và báo hiệu khi bạn rời khỏi đường cao tốc"
+                ],
+                correctAnswer: 0, // A
+                questionEn: "Question 012: When should you use your horn?",
+                optionsEn: [
+                    "A. To avoid collisions and warn oncoming traffic on narrow mountain roads when you cannot see at least 200 feet ahead",
+                    "B. To greet friends as you pass by and express impatience in traffic jams",
+                    "C. To celebrate passing your driving test and to warn pedestrians at crosswalks",
+                    "D. To adjust your rearview mirrors and signal when exiting highways"
+                ]
+            },
+            {
+                question: "Câu 013: Khi nào bạn nên hạ đèn pha chiếu xa xuống chiếu gần?",
+                options: [
+                    "A. Trong vòng 500 feet khi có xe ngược chiều hoặc trong vòng 300 feet xe phía trước bạn",
+                    "B. Trong vòng 300 feet khi có xe ngược chiều hoặc trong vòng 500 feet xe phía trước bạn",
+                    "C. Trong vòng 200 feet bất kỳ xe nào, dù đang tiến đến hay đang đi trước",
+                    "D. Chỉ khi lái trên đường phố đô thị đã có đủ ánh sáng"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 013: When should you dim your high beams to low beams?",
+                optionsEn: [
+                    "A. Within 500 feet when there is oncoming traffic or within 300 feet of a vehicle ahead of you",
+                    "B. Within 300 feet when there is oncoming traffic or within 500 feet of a vehicle ahead of you",
+                    "C. Within 200 feet of any vehicle, whether approaching or ahead",
+                    "D. Only when driving on urban streets that are already well-lit"
+                ]
+            },
+            {
+                question: "Câu 014: Bạn nên sử dụng đèn pha:",
+                options: [
+                    "A. Khi quá tối không nhìn thấy từ cách 1.000 feet; bắt đầu 30 phút sau khi mặt trời lặn; và cho đến 30 phút trước khi mặt trời mọc",
+                    "B. Khi thời tiết bất lợi khiến bạn phải dùng cần gạt nước và trên đường núi cũng như trong đường hầm",
+                    "C. Khi quá tối không nhìn thấy từ cách 1.000 feet; bắt đầu 30 phút sau khi mặt trời lặn; cho đến 30 phút trước khi mặt trời mọc; trong thời tiết xấu khi bạn dùng cần gạt nước; khi mây, bụi, khói hoặc sương làm bạn không thể nhìn thấy phương tiện khác; trên đường núi và trong đường hầm (kể cả ban ngày nắng); khi biển báo yêu cầu bật đèn; và để giúp người khác dễ nhìn thấy xe bạn, nhất là khi mặt trời lặn thấp",
+                    "D. Chỉ vào ban đêm và trong đường hầm"
+                ],
+                correctAnswer: 2, // C
+                questionEn: "Question 014: You should use your headlights:",
+                optionsEn: [
+                    "A. When it's too dark to see from a distance of 1,000 feet; starting 30 minutes after sunset; and until 30 minutes before sunrise",
+                    "B. When adverse weather conditions require you to use windshield wipers and on mountain roads and in tunnels",
+                    "C. When it's too dark to see from a distance of 1,000 feet; starting 30 minutes after sunset; until 30 minutes before sunrise; in bad weather when you use windshield wipers; when clouds, dust, smoke, or fog make it difficult to see other vehicles; on mountain roads and in tunnels (even on sunny days); when signs require headlights; and to help others see your vehicle, especially when the sun is low",
+                    "D. Only at night and in tunnels"
+                ]
+            },
+            {
+                question: "Câu 015: Nếu bạn thấy va chạm hoặc nguy hiểm phía trước, cách nào sau đây là phương pháp đúng để cảnh báo các lái xe phía sau?",
+                options: [
+                    "A. Bật đèn cảnh báo khẩn cấp, đạp nhẹ bàn đạp phanh ba hoặc bốn lần, và dùng tín hiệu tay khi giảm tốc hoặc dừng lại",
+                    "B. Nháy đèn pha chiếu xa liên tục và bấm còi",
+                    "C. Gạt xi-nhan bật/tắt liên tục mà không dùng bàn đạp phanh",
+                    "D. Tăng tốc và chuyển làn nhanh để tránh nguy hiểm"
+                ],
+                correctAnswer: 0, // A
+                questionEn: "Question 015: If you see a collision or hazard ahead, which of the following is the correct method to warn drivers behind you?",
+                optionsEn: [
+                    "A. Turn on emergency flashers, lightly tap the brake pedal three or four times, and use hand signals when slowing or stopping",
+                    "B. Flash your high beams continuously and honk your horn",
+                    "C. Toggle your turn signals on and off repeatedly without using the brake pedal",
+                    "D. Accelerate and change lanes quickly to avoid the danger"
+                ]
+            },
+            {
+                question: "Câu 016: Nếu bạn cần dừng xe vì sự cố, bước nào sau đây là chính xác?",
+                options: [
+                    "A. Bật đèn cảnh báo khẩn cấp (hoặc xi-nhan nếu xe không có đèn cảnh báo), rẽ khỏi đường tránh xa mọi phương tiện nếu có thể, dừng ở nơi dễ thấy nếu không thể rời hoàn toàn khỏi lòng đường, không dừng trên đỉnh đồi hoặc quanh khúc cua, và gọi cứu hộ khẩn cấp trong khi ở trong xe",
+                    "B. Dừng xe ở bất cứ nơi an toàn nào, tắt đèn pha, ra khỏi xe để kiểm tra sự cố, và ra hiệu cho xe chạy ngang qua giúp đỡ",
+                    "C. Dừng trong làn đường lưu thông, nháy đèn phanh nhanh, đứng phía sau xe về phía luồng giao thông, và gọi trợ giúp",
+                    "D. Tiếp tục lái chậm đến trạm xăng gần nhất, dùng xi-nhan để vào trạm, rồi gọi dịch vụ cứu hộ"
+                ],
+                correctAnswer: 0, // A
+                questionEn: "Question 016: If you need to stop due to a breakdown, which of the following steps is correct?",
+                optionsEn: [
+                    "A. Turn on emergency flashers (or turn signals if the vehicle doesn't have flashers), turn off the road away from all traffic if possible, stop in a visible location if you cannot completely leave the roadway, don't stop on hilltops or around curves, and call for emergency assistance while staying in your vehicle",
+                    "B. Stop at any safe place, turn off headlights, get out of the vehicle to check the problem, and signal passing vehicles for help",
+                    "C. Stop in the traffic lane, flash brake lights quickly, stand behind the vehicle facing traffic, and call for help",
+                    "D. Continue driving slowly to the nearest gas station, use turn signals to enter, then call for roadside assistance"
+                ]
+            },
+            {
+                question: "Câu 017: Vạch vàng liền một vạch ở giữa đường hai chiều biểu thị điều gì?",
+                options: [
+                    "A. Phân chia các làn xe cùng chiều",
+                    "B. Đánh dấu giữa đường hai chiều và cấm vượt khi vạch ở bên phía bạn",
+                    "C. Chỉ ra làn giữa dùng chung để rẽ trái",
+                    "D. Cho phép vượt ở cả hai hướng khi an toàn"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 017: What does a single solid yellow line in the middle of a two-way road indicate?",
+                optionsEn: [
+                    "A. Divides lanes of traffic going in the same direction",
+                    "B. Marks the center of a two-way road and prohibits passing when the line is on your side",
+                    "C. Indicates a center lane shared for left turns",
+                    "D. Allows passing in both directions when safe"
+                ]
+            },
+            {
+                question: "Câu 018: Nếu chỉ có một làn xe đi theo hướng của bạn và có vạch vàng liền ở bên phía bạn, bạn nên:",
+                options: [
+                    "A. Phân chia các làn xe cùng chiều",
+                    "B. Hiểu rằng đó là vạch giữa đường hai chiều và cấm vượt khi vạch ở bên bạn",
+                    "C. Cho rằng đó là làn giữa dùng chung để rẽ trái",
+                    "D. Cho phép vượt khi an toàn"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 018: If there is only one lane going in your direction and there is a solid yellow line on your side, you should:",
+                optionsEn: [
+                    "A. Divide lanes of traffic going in the same direction",
+                    "B. Understand that it's the center line of a two-way road and passing is prohibited when the line is on your side",
+                    "C. Assume it's a shared center lane for left turns",
+                    "D. Allow passing when safe"
+                ]
+            },
+            {
+                question: "Câu 019: Vạch đôi liền màu vàng ở giữa đường biểu thị điều gì?",
+                options: [
+                    "A. Làn rẽ trái hai chiều, cho phép rẽ trái",
+                    "B. Bạn không được vượt qua vạch đôi liền màu vàng",
+                    "C. Bạn có thể vượt với sự thận trọng nếu không có xe ngược chiều",
+                    "D. Các làn đường sẽ nhập lại phía trước"
+                ],
+                correctAnswer: 1, // B
+                questionEn: "Question 019: What do double solid yellow lines in the center of the road indicate?",
+                optionsEn: [
+                    "A. A two-way left turn lane where turning left is permitted",
+                    "B. You must not pass over double solid yellow lines",
+                    "C. You may pass with caution if there is no oncoming traffic",
+                    "D. Lanes will merge ahead"
+                ]
+            },
+            {
+                question: "Câu 020: Bạn phải giữ bên phải vạch đôi liền màu vàng trừ khi bạn đang:",
+                options: [
+                    "A. Trong làn xe đa hành khách (HOV) có lối vào được đánh dấu bên trái",
+                    "B. Được biển báo hay công trường yêu cầu đi bên kia vì làn của bạn bị đóng hoặc chặn",
+                    "C. Rẽ trái qua một cặp vạch đôi màu vàng để vào/ra lối đi riêng hoặc để quay đầu",
+                    "D. Tất cả các trường hợp trên"
+                ],
+                correctAnswer: 3, // D
+                questionEn: "Question 020: You must stay to the right of double solid yellow lines unless you are:",
+                optionsEn: [
+                    "A. In a high-occupancy vehicle (HOV) lane with an entrance marked on the left",
+                    "B. Directed by signs or construction to drive on the other side because your lane is closed or blocked",
+                    "C. Turning left across a set of double yellow lines to enter/exit a private driveway or to make a U-turn",
+                    "D. All of the above"
+                ]
+            }
+        ];
+
+        // Quiz engine variables
+        let currentQuestion = 0;
+        let correctAnswers = 0;
+        let wrongAnswers = 0;
+        let language = 'vi'; // Default language
+        let answered = false;
+
+        // DOM elements
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const progressFill = document.getElementById('progress-fill');
+        const progressTextVi = document.getElementById('progress-text-vi');
+        const progressTextEn = document.getElementById('progress-text-en');
+        const statsTextVi = document.getElementById('stats-text-vi');
+        const statsTextEn = document.getElementById('stats-text-en');
+        
+        const feedbackCorrectVi = document.getElementById('feedback-correct-vi');
+        const feedbackIncorrectVi = document.getElementById('feedback-incorrect-vi');
+        const feedbackCorrectEn = document.getElementById('feedback-correct-en');
+        const feedbackIncorrectEn = document.getElementById('feedback-incorrect-en');
+        
+        const prevBtnVi = document.getElementById('prev-btn-vi');
+        const nextBtnVi = document.getElementById('next-btn-vi');
+        const prevBtnEn = document.getElementById('prev-btn-en');
+        const nextBtnEn = document.getElementById('next-btn-en');
+        
+        const btnVietnamese = document.getElementById('btn-vietnamese');
+        const btnEnglish = document.getElementById('btn-english');
+        const titleVi = document.getElementById('title-vi');
+        const titleEn = document.getElementById('title-en');
+
+        // Initialize quiz
+        function initQuiz() {
+            loadQuestion();
+            updateProgress();
+            updateStats();
+            
+            // Event listeners
+            prevBtnVi.addEventListener('click', prevQuestion);
+            nextBtnVi.addEventListener('click', nextQuestion);
+            prevBtnEn.addEventListener('click', prevQuestion);
+            nextBtnEn.addEventListener('click', nextQuestion);
+            
+            btnVietnamese.addEventListener('click', () => setLanguage('vi'));
+            btnEnglish.addEventListener('click', () => setLanguage('en'));
+        }
+
+        // Load question
+        function loadQuestion() {
+            answered = false;
+            const questionData = quizData[currentQuestion];
+            
+            // Display question
+            questionElement.textContent = language === 'vi' ? questionData.question : questionData.questionEn;
+            
+            // Clear previous options and feedback
+            optionsElement.innerHTML = '';
+            hideAllFeedback();
+            
+            // Add options
+            const options = language === 'vi' ? questionData.options : questionData.optionsEn;
+            options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.classList.add('option');
+                optionDiv.textContent = option;
+                optionDiv.addEventListener('click', () => selectOption(index));
+                optionsElement.appendChild(optionDiv);
+            });
+            
+            // Update buttons
+            updateButtons();
+        }
+
+        // Select option
+        function selectOption(selectedIndex) {
+            if (answered) return;
+            
+            const questionData = quizData[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            
+            answered = true;
+            
+            // Mark selected option
+            options[selectedIndex].classList.add('selected');
+            
+            // Check if correct
+            if (selectedIndex === questionData.correctAnswer) {
+                options[selectedIndex].classList.add('correct');
+                if (language === 'vi') {
+                    feedbackCorrectVi.style.display = 'block';
+                } else {
+                    feedbackCorrectEn.style.display = 'block';
+                }
+                correctAnswers++;
+            } else {
+                options[selectedIndex].classList.add('incorrect');
+                options[questionData.correctAnswer].classList.add('correct');
+                if (language === 'vi') {
+                    feedbackIncorrectVi.style.display = 'block';
+                } else {
+                    feedbackIncorrectEn.style.display = 'block';
+                }
+                wrongAnswers++;
+            }
+            
+            // Update stats
+            updateStats();
+        }
+
+        // Hide all feedback elements
+        function hideAllFeedback() {
+            feedbackCorrectVi.style.display = 'none';
+            feedbackIncorrectVi.style.display = 'none';
+            feedbackCorrectEn.style.display = 'none';
+            feedbackIncorrectEn.style.display = 'none';
+        }
+
+        // Next question
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+                updateProgress();
+            }
+        }
+
+        // Previous question
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+                updateProgress();
+            }
+        }
+
+        // Update progress
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            progressFill.style.width = `${progress}%`;
+            
+            progressTextVi.textContent = `Câu hỏi ${currentQuestion + 1}/${quizData.length}`;
+            progressTextEn.textContent = `Question ${currentQuestion + 1}/${quizData.length}`;
+            
+            updateButtons();
+        }
+
+        // Update statistics
+        function updateStats() {
+            statsTextVi.textContent = `Đúng: ${correctAnswers} | Sai: ${wrongAnswers}`;
+            statsTextEn.textContent = `Correct: ${correctAnswers} | Wrong: ${wrongAnswers}`;
+        }
+
+        // Update button states
+        function updateButtons() {
+            prevBtnVi.disabled = currentQuestion === 0;
+            prevBtnEn.disabled = currentQuestion === 0;
+            
+            nextBtnVi.disabled = currentQuestion === quizData.length - 1;
+            nextBtnEn.disabled = currentQuestion === quizData.length - 1;
+        }
+
+        // Set language
+        function setLanguage(lang) {
+            language = lang;
+            
+            if (lang === 'vi') {
+                btnVietnamese.classList.add('active');
+                btnEnglish.classList.remove('active');
+                
+                titleVi.classList.remove('hide');
+                titleEn.classList.add('hide');
+                
+                progressTextVi.classList.remove('hide');
+                progressTextEn.classList.add('hide');
+                
+                statsTextVi.classList.remove('hide');
+                statsTextEn.classList.add('hide');
+                
+                prevBtnVi.classList.remove('hide');
+                nextBtnVi.classList.remove('hide');
+                
+                prevBtnEn.classList.add('hide');
+                nextBtnEn.classList.add('hide');
+            } else {
+                btnVietnamese.classList.remove('active');
+                btnEnglish.classList.add('active');
+                
+                titleVi.classList.add('hide');
+                titleEn.classList.remove('hide');
+                
+                progressTextVi.classList.add('hide');
+                progressTextEn.classList.remove('hide');
+                
+                statsTextVi.classList.add('hide');
+                statsTextEn.classList.remove('hide');
+                
+                prevBtnVi.classList.add('hide');
+                nextBtnVi.classList.add('hide');
+                
+                prevBtnEn.classList.remove('hide');
+                nextBtnEn.classList.remove('hide');
+            }
+            
+            // Reload current question with new language
+            loadQuestion();
+        }
+
+        // Start the quiz when page loads
+        window.addEventListener('DOMContentLoaded', initQuiz);
+    </script>
+</body>
+</html>
